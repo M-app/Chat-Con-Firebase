@@ -4,13 +4,13 @@ package com.upvhas.app.chaty.chat;
  * Created by user on 9/12/2016.
  */
 
-public class GoatMessage {
+public class Message {
 
     private String autor;
     private String textMessage;
     private String photoUrl;
 
-    public GoatMessage(String autor, String textMessage, String photoUrl) {
+    public Message(String autor, String textMessage, String photoUrl) {
         this.autor = autor;
         this.textMessage = textMessage;
         this.photoUrl = photoUrl;

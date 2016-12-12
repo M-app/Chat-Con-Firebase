@@ -10,7 +10,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
@@ -26,9 +25,9 @@ public class ChatFragment extends Fragment {
     RecyclerView mRecyclerMessages;
     ImageButton mPickImageButton;
     EditText mWriteMessageEditText;
-    Button mSendButton;
+    ImageButton mSendButton;
 
-    private ChatMessageAdapter adapter;
+    private ChatMessageAdapter mAdapter;
 
     private String mUserName;
 
@@ -41,23 +40,31 @@ public class ChatFragment extends Fragment {
                              Bundle savedInstanceState) {
         mUserName = ANONYMOUS;
         View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
+
+        // Initialize views
         mRecyclerMessages = (RecyclerView) rootView.findViewById(R.id.chat_messages_RecyclerView);
         mPickImageButton = (ImageButton) rootView.findViewById(R.id.photoPickerButton);
         mWriteMessageEditText = (EditText) rootView.findViewById(R.id.messageEditText);
-        mSendButton = (Button) rootView.findViewById(R.id.sendButton);
+        mSendButton = (ImageButton) rootView.findViewById(R.id.sendButton);
+
+        // layout manager recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         mRecyclerMessages.setHasFixedSize(false);
         mRecyclerMessages.setLayoutManager(layoutManager);
 
-        adapter = new ChatMessageAdapter(getActivity());
-        mRecyclerMessages.setAdapter(adapter);
-        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        // Initialize mAdapter recyclerview
+        mAdapter = new ChatMessageAdapter(getActivity());
+        mRecyclerMessages.setAdapter(mAdapter);
+
+        // observer for scroll when some item is inserted
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
-                mRecyclerMessages.smoothScrollToPosition(adapter.getItemCount());
+                mRecyclerMessages.smoothScrollToPosition(mAdapter.getItemCount());
             }
         });
 
+        // Set Enable sendButton if EditText contains some text
         mWriteMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
@@ -73,12 +80,13 @@ public class ChatFragment extends Fragment {
             public void afterTextChanged(Editable editable) {}
         });
 
+        // action send button
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                GoatMessage message =
-                        new GoatMessage(mUserName,mWriteMessageEditText.getText().toString(),null);
-                adapter.addMessage(message);
+                Message message =
+                        new Message(mUserName,mWriteMessageEditText.getText().toString(),null);
+                mAdapter.addMessage(message);
                 mWriteMessageEditText.setText("");
             }
         });

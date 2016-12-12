@@ -15,31 +15,31 @@ import java.util.List;
 
 public class ChatMessageAdapter extends RecyclerView.Adapter<ChatMessageViewHolder> {
 
-    private static final String TAG = "ChatMessageAdapter";
     private Activity mActivity;
-    List<GoatMessage> mGoatMessages = new ArrayList<>();
 
+    List<Message> mMessages = new ArrayList<>();
     public ChatMessageAdapter(Activity mActivity) {
         this.mActivity = mActivity;
     }
 
-    public void addMessage(GoatMessage message){
-        mGoatMessages.add(message);
-        notifyItemInserted(mGoatMessages.size());
+    public void addMessage(Message message){
+        mMessages.add(message);
+        // Notify to all observers
+        notifyItemInserted(mMessages.size());
     }
 
     @Override
     public ChatMessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ChatMessageViewHolder(mActivity,mActivity.getLayoutInflater().inflate(R.layout.item_chat,parent,false));
+        return new ChatMessageViewHolder(mActivity.getLayoutInflater().inflate(R.layout.item_chat,parent,false));
     }
 
     @Override
     public void onBindViewHolder(ChatMessageViewHolder holder, int position) {
-        holder.bind(mGoatMessages.get(position));
+        holder.bind(mMessages.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return mGoatMessages.size();
+        return mMessages.size();
     }
 }
