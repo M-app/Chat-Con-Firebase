@@ -76,8 +76,12 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if(user != null){
-                    // user is signed in
-                    startActivity(new Intent(LoginActivity.this, SalasActivity.class));
+                    // user is signed in firebase
+                    Intent intent = new Intent(LoginActivity.this,SalasActivity.class);
+                    intent.putExtra("displayName",user.getDisplayName());
+                    String photoUrl = user.getPhotoUrl().toString();
+                    intent.putExtra("photoUrl",photoUrl);
+                    startActivity(intent);
                 }else{
                     // user is signed out
                 }
@@ -119,14 +123,12 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
         showProgress(true);
-
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mFirebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
-
                         // If sign in fails, display a message to the user. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
