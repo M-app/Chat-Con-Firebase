@@ -6,11 +6,14 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +36,7 @@ public class SalasFragment extends Fragment implements GoogleApiClient.OnConnect
 
     private TextView displayNameTextView;
     private ImageView profileImageView;
-    private Button cerrarSesionButton;
+    private android.support.v7.widget.Toolbar salasToolbar;
 
     // Google api client for sign out
     GoogleApiClient mGoogleApiClient;
@@ -44,12 +47,12 @@ public class SalasFragment extends Fragment implements GoogleApiClient.OnConnect
 
     public SalasFragment() {
         // Required empty public constructor
+        setHasOptionsMenu(true);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Gooogle Sign In Requisito for signOut()
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -69,7 +72,10 @@ public class SalasFragment extends Fragment implements GoogleApiClient.OnConnect
         // initialize views
         displayNameTextView = (TextView) rootView.findViewById(R.id.displayNameTextView);
         profileImageView = (ImageView) rootView.findViewById(R.id.profileImageView);
-        cerrarSesionButton = (Button) rootView.findViewById(R.id.cerrarSesionButton);
+        salasToolbar = (android.support.v7.widget.Toolbar) rootView.findViewById(R.id.salas_toolbar);
+
+        // set the toolbar as action bar
+        ((AppCompatActivity) getActivity()).setSupportActionBar(salasToolbar);
 
         // Firebase Initialize
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -95,14 +101,6 @@ public class SalasFragment extends Fragment implements GoogleApiClient.OnConnect
                     .into(profileImageView);
         }
 
-        cerrarSesionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                signOut();
-                startActivity(new Intent(getActivity(),LoginActivity.class));
-            }
-        });
-
         return rootView;
     }
 
@@ -118,6 +116,21 @@ public class SalasFragment extends Fragment implements GoogleApiClient.OnConnect
         if(mStateListener != null){
             mFirebaseAuth.removeAuthStateListener(mStateListener);
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_salas,menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_signOut:
+                signOut();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void signOut() {
