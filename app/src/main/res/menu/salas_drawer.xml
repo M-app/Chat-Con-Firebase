@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Chats" >
+        <menu >
+            <item android:title="Crear Chat"
+                android:id="@+id/salas_drawer_action_crearChat"
+                android:icon="@mipmap/ic_create_black_24dp"/>
+            <item android:title="Unirse a chat"
+                android:id="@+id/salas_drawer_action_unirseChat"
+                android:icon="@mipmap/ic_chat_black_24dp"
+                />
+        </menu>
+    </item>
+    <item android:title="Aplicación" >
+        <menu >
+            <item android:title="Invitar a Chaty"
+                android:id="@+id/salas_drawer_action_invitar"
+                android:icon="@mipmap/ic_public_black_24dp"/>
+            <item android:title="Configuración"
+                android:id="@+id/salas_drawer_action_config"
+                android:icon="@mipmap/ic_settings_black_24dp"/>
+            <item android:title="Cerrar Sesión"
+                android:id="@+id/salas_drawer_action_signout"
+                android:icon="@mipmap/ic_exit_to_app_black_24dp"/>
+        </menu>
+    </item>
+</menu>
