@@ -1,0 +1,83 @@
+<ScrollView android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/activity_horizontal_margin"
+    tools:context="com.upvhas.app.chaty.salas.CreateChatFragment">
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre del Chat"
+        android:id="@+id/nuevo_chat_textInputLayout_nombreChat">
+
+        <EditText
+            android:id="@+id/nuevo_chat_nombreChat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:textColorHint="#000"/>
+
+
+    </android.support.design.widget.TextInputLayout>
+
+
+
+    <RelativeLayout
+        android:id="@+id/nuevo_chat_imagen_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:layout_below="@id/nuevo_chat_textInputLayout_nombreChat">
+
+        <ImageView
+            android:id="@+id/nuevo_chat_ImageView"
+            android:layout_width="192dp"
+            android:layout_height="192dp"
+            android:src="@mipmap/imagen_faltante_192dp"
+            android:layout_gravity="center_horizontal"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"/>
+
+        <Button
+            android:id="@+id/nuevo_chat_cambiarImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Cambiar\nImagen"
+            android:layout_centerVertical="true"
+            android:fontFamily="sans-serif"
+            android:enabled="false"
+            android:background="#fff"
+            android:layout_toRightOf="@id/nuevo_chat_ImageView"
+            android:layout_marginLeft="32dp"
+            />
+
+    </RelativeLayout>
+
+    <CheckBox
+        android:id="@+id/nuevo_chat_check_esPrivada"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sala Privada"
+        android:layout_marginBottom="16dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/nuevo_chat_imagen_container"/>
+
+    <Button
+        android:id="@+id/nuevo_chat_listo_Button"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/nuevo_chat_check_esPrivada"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:enabled="false"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:background="#fff"
+        android:text="Creat Chat"/>
+</RelativeLayout>
+</ScrollView>

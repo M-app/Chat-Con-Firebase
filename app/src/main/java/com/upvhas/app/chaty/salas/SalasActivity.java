@@ -32,6 +32,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
 
     private DrawerLayout drawerLayout;
     private NavigationView salasNavigationView;
+    private Toolbar salasToolbar;
 
     // Views
         // Header navigation drawer
@@ -54,7 +55,6 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
 
         // Initialize views
         drawerLayout = (DrawerLayout) findViewById(R.id.salas_drawer_layout);
-
 
         // Initialize Navigation view
         salasNavigationView = (NavigationView) findViewById(R.id.salas_navigation_view);
@@ -131,7 +131,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
         Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
-                Toast.makeText(SalasActivity.this,"Log out",Toast.LENGTH_LONG).show();
+
             }
         });
     }
@@ -149,6 +149,9 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                             case R.id.salas_drawer_action_signout:
                                 signOut();
                                 return true;
+                            case R.id.salas_drawer_action_crearChat:
+                                    showCreateChatFragment();
+                                return true;
                         }
                         String title = menuItem.getTitle().toString();
                         Toast.makeText(SalasActivity.this,title,Toast.LENGTH_LONG).show();
@@ -158,12 +161,20 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
         );
     }
 
+    private void showCreateChatFragment(){
+        drawerLayout.closeDrawer(GravityCompat.START);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.activity_salas_container,new CreateChatFragment())
+                .commit();
+    }
+
     /**
      * Set toolbar as actionbar and enabled hamburguer icon click
      */
     private void setToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.salas_toolbar);
-        setSupportActionBar(toolbar);
+        salasToolbar = (Toolbar) findViewById(R.id.salas_toolbar);
+        setSupportActionBar(salasToolbar);
         final ActionBar ab = getSupportActionBar();
         if (ab != null) {
             ab.setHomeAsUpIndicator(R.mipmap.ic_dehaze_black_24dp);
@@ -173,6 +184,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.salas_menu_toolbar,menu);
         return super.onCreateOptionsMenu(menu);
     }
 

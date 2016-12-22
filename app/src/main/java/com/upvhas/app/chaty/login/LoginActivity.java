@@ -23,8 +23,13 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.upvhas.app.chaty.R;
+import com.upvhas.app.chaty.entities.User;
 import com.upvhas.app.chaty.salas.SalasActivity;
+
+import java.util.HashMap;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
@@ -37,6 +42,10 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     //Firebase Instances
     FirebaseAuth mFirebaseAuth;
     FirebaseAuth.AuthStateListener mAuthStateListener;
+    FirebaseUser mUser = null;
+
+    FirebaseDatabase mFirebaseDatabase;
+    DatabaseReference mUsersReference;
 
     //Views
     private SignInButton mSignInButton;
@@ -53,6 +62,8 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
         //Initialize firebase instances
         mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseDatabase = FirebaseDatabase.getInstance();
+        mUsersReference = mFirebaseDatabase.getReference().child("users");
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -74,12 +85,12 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null){
+                mUser = firebaseAuth.getCurrentUser();
+                if(mUser != null){
                     // user is signed in firebase
                     Intent intent = new Intent(LoginActivity.this,SalasActivity.class);
-                    intent.putExtra("displayName",user.getDisplayName());
-                    String photoUrl = user.getPhotoUrl().toString();
+                    intent.putExtra("displayName",mUser.getDisplayName());
+                    String photoUrl = mUser.getPhotoUrl().toString();
                     intent.putExtra("photoUrl",photoUrl);
                     startActivity(intent);
                 }else{
@@ -136,6 +147,15 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                             Log.w(TAG, "signInWithCredential", task.getException());
                             Toast.makeText(LoginActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
+                        }else{
+                            // implement login to firebase storage and firebase database for users
+                            if(mUser != null){
+                                User user = new User(mUser.getEmail().replace('.','_'),
+                                        mUser.getDisplayName(),
+                                        mUser.getPhotoUrl().toString(),
+                                        new HashMap<String, Boolean>());
+                                mUsersReference.child(user.getEmail()).setValue(user);
+                            }
                         }
                         showProgress(false);
                     }
