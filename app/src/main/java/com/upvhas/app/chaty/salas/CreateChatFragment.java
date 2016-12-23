@@ -59,6 +59,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     DatabaseReference mCurrentUserReference;
 
     private Sala mSala;
+    private HashMap<String,Boolean> mSalasExistentes;
+    private String mNombreImagen;
 
     public CreateChatFragment() {
         // Required empty public constructor
@@ -79,9 +81,25 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
                 .child("users")
                 .child(mUser.getEmail().replace('.','_'));
 
+        mCurrentUserReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                if(user.getSalas() != null){ // el usuario ya tiene salas
+                    mSalasExistentes = (HashMap<String, Boolean>) user.getSalas();
+                }else{
+                    mSalasExistentes = null;
+                }
+            }
+            @Override public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
         // initi sala object
         mSala = new Sala();
         mSala.setAdmin(mUser.getEmail().replace('.','_'));
+
+        // set sala image
         setChatImageFromDensity();
 
         // Inflate the layout for this fragment
@@ -110,27 +128,17 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             }
             @Override
             public void afterTextChanged(final Editable editable) {
-                btnCrearChat.setEnabled(false);
-                mSala.setNombre(nombreChat.getText().toString());
-                Toast.makeText(getActivity(),mSala.getNombre(),Toast.LENGTH_LONG).show();
-                mCurrentUserReference.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
-                        if(user.getSalas() != null){
-                            HashMap<String,Boolean> map = (HashMap<String, Boolean>) user.getSalas();
-                            boolean salaExiste = map.containsKey(mSala.getId());
-                            if(salaExiste){
-                                nombreChat.setError("Sala ya existe!");
-                            }else{
-                                mSala.setId(mUser.getEmail().replace('.','_') + "_" +mSala.getNombre());
-                                btnCrearChat.setEnabled(true);
-                            }
-                        }
-                    }
-                    @Override public void onCancelled(DatabaseError databaseError) {
-                    }
-                });
+                mSala.setNombre(nombreChat.getText().toString()/*.replaceAll("(?s).|\\s+","")*/);
+                mSala.setId(mUser.getEmail().replace('.','_') + "_" + mSala.getNombre());
+                mNombreImagen = mSala.getId() + "_";
+                Toast.makeText(getActivity(),mSala.getId(),Toast.LENGTH_LONG).show();
+                boolean salaExiste = mSalasExistentes.containsKey(mSala.getId());
+                if(salaExiste){
+                    nombreChat.setError("Sala ya existe!");
+                    btnCrearChat.setEnabled(false);
+                }else{
+                    btnCrearChat.setEnabled(true);
+                }
             } // verificar si el nombre de la sala ya existe para este usuario
         });
         return rootView;
@@ -154,10 +162,12 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         // firebase database new sala
         mSalasRef.child(mSala.getId()).setValue(mSala);
         // add sala to user object database
+        if(mSalasExistentes == null){
+            mSalasExistentes = new HashMap<>();
+        }
+        mSalasExistentes.put(mSala.getId(),false);
         Map<String,Object> map = new HashMap<>();
-        Map<String,Boolean> salaMap = new HashMap<>();
-        salaMap.put(mSala.getId(),false);
-        map.put("salas",salaMap);
+        map.put("salas",mSalasExistentes);
         mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
@@ -201,13 +211,10 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
             btnCrearChat.setEnabled(false);
+            nombreChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
-            String nameImage = mUser.getEmail().replace('.','_') + "_" +
-                    nombreChat.getText().toString().replaceAll("\\s+","")+
-                    "_" + fullPhotoUri.getLastPathSegment();
-
+            String nameImage =  "nombreArbitrario";/*mNombreImagen += fullPhotoUri.getLastPathSegment();*/
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);
-
             imageRef.putFile(fullPhotoUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
