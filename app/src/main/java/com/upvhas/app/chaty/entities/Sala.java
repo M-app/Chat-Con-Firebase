@@ -5,7 +5,6 @@ package com.upvhas.app.chaty.entities;
  */
 
 public class Sala {
-    private String id;
     private String nombre;
     private String admin;
     private String imageUrl;
@@ -13,20 +12,11 @@ public class Sala {
 
     public Sala(){}
 
-    public Sala(String id, String nombre, String admin, String imageUrl, boolean isPublica) {
-        this.id = id;
+    public Sala(String nombre, String admin, String imageUrl, boolean isPublica) {
         this.nombre = nombre;
         this.admin = admin;
         this.imageUrl = imageUrl;
         this.isPublica = isPublica;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getNombre() {

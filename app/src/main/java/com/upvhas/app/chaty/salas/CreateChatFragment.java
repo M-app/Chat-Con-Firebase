@@ -8,7 +8,6 @@ import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,12 +56,12 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     FirebaseDatabase mFirebaseDatabase;
     DatabaseReference mSalasRef;
     FirebaseUser mUser;
+    String mEmail;
     DatabaseReference mCurrentUserReference;
     ValueEventListener mValueEventListener;
 
     private Sala mSala;
     private HashMap<String,Boolean> mSalasExistentes;
-    private String mNombreImagen;
 
     public CreateChatFragment() {
         // Required empty public constructor
@@ -79,6 +78,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         mFirebaseDatabase = FirebaseDatabase.getInstance();
         mSalasRef = mFirebaseDatabase.getReference().child("salas");
         mUser = FirebaseAuth.getInstance().getCurrentUser();
+        mEmail = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_","");
+        mEmail = mEmail.replace('.','_');
         mCurrentUserReference = mFirebaseDatabase.getReference()
                 .child("users")
                 .child(mUser.getEmail().replace('.','_'));
@@ -132,10 +133,9 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             public void afterTextChanged(final Editable editable) {
                 mSala.setNombre(nombreChat.getText().toString().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_",""));
                 mSala.setNombre(mSala.getNombre().replaceAll("\\s+","_s_"));
-                mSala.setId(mUser.getEmail().replaceAll("\\.","_") + "_s_" + mSala.getNombre());
-                Toast.makeText(getActivity(),mSala.getId(),Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(),mSala.getNombre(),Toast.LENGTH_LONG).show();
                 if(mSalasExistentes != null){
-                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getId());
+                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getNombre());
                     if(salaExiste){
                         nombreChat.setError("Sala ya existe!");
                         btnCrearChat.setEnabled(false);
@@ -179,12 +179,14 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     private void publicarSala(){
         mSala.setPublica(checkEsPrivada.isSelected());
         // firebase database new sala
-        mSalasRef.child(mSala.getId()).setValue(mSala);
+        String email = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_","");
+        email = email.replaceAll("\\.","_");
+        mSalasRef.child(email).push().setValue(mSala);
         // add sala to user object database
         if(mSalasExistentes == null){
             mSalasExistentes = new HashMap<>();
         }
-        mSalasExistentes.put(mSala.getId(),false);
+        mSalasExistentes.put(mSala.getNombre(),false);
         Map<String,Object> map = new HashMap<>();
         map.put("salas",mSalasExistentes);
         mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {
@@ -234,8 +236,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             btnCrearChat.setEnabled(false);
             nombreChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
-            String nameImage = mSala.getId() + fullPhotoUri.getLastPathSegment();
-            Log.v("NOMBRE_IMAGEN",nameImage);
+            String nameImage = "nomri" + fullPhotoUri.getLastPathSegment();
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);
             imageRef.putFile(fullPhotoUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
