@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,6 +58,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     DatabaseReference mSalasRef;
     FirebaseUser mUser;
     DatabaseReference mCurrentUserReference;
+    ValueEventListener mValueEventListener;
 
     private Sala mSala;
     private HashMap<String,Boolean> mSalasExistentes;
@@ -81,7 +83,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
                 .child("users")
                 .child(mUser.getEmail().replace('.','_'));
 
-        mCurrentUserReference.addValueEventListener(new ValueEventListener() {
+        mValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
@@ -91,9 +93,9 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
                     mSalasExistentes = null;
                 }
             }
-            @Override public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        };
 
         // initi sala object
         mSala = new Sala();
@@ -128,20 +130,37 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             }
             @Override
             public void afterTextChanged(final Editable editable) {
-                mSala.setNombre(nombreChat.getText().toString()/*.replaceAll("(?s).|\\s+","")*/);
-                mSala.setId(mUser.getEmail().replace('.','_') + "_" + mSala.getNombre());
-                mNombreImagen = mSala.getId() + "_";
+                mSala.setNombre(nombreChat.getText().toString().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_",""));
+                mSala.setNombre(mSala.getNombre().replaceAll("\\s+","_s_"));
+                mSala.setId(mUser.getEmail().replaceAll("\\.","_") + "_s_" + mSala.getNombre());
                 Toast.makeText(getActivity(),mSala.getId(),Toast.LENGTH_LONG).show();
-                boolean salaExiste = mSalasExistentes.containsKey(mSala.getId());
-                if(salaExiste){
-                    nombreChat.setError("Sala ya existe!");
-                    btnCrearChat.setEnabled(false);
-                }else{
-                    btnCrearChat.setEnabled(true);
+                if(mSalasExistentes != null){
+                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getId());
+                    if(salaExiste){
+                        nombreChat.setError("Sala ya existe!");
+                        btnCrearChat.setEnabled(false);
+                        btnCambiarImagen.setEnabled(false);
+                    }else{
+                        btnCrearChat.setEnabled(true);
+                    }
                 }
             } // verificar si el nombre de la sala ya existe para este usuario
         });
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mCurrentUserReference.addValueEventListener(mValueEventListener);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(mValueEventListener != null){
+            mCurrentUserReference.removeEventListener(mValueEventListener);
+        }
     }
 
     @Override
@@ -171,7 +190,9 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.activity_salas_container,new SalasFragment())
+                        .commit();
             }
         });
     }
@@ -213,7 +234,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             btnCrearChat.setEnabled(false);
             nombreChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
-            String nameImage =  "nombreArbitrario";/*mNombreImagen += fullPhotoUri.getLastPathSegment();*/
+            String nameImage = mSala.getId() + fullPhotoUri.getLastPathSegment();
+            Log.v("NOMBRE_IMAGEN",nameImage);
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);
             imageRef.putFile(fullPhotoUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
