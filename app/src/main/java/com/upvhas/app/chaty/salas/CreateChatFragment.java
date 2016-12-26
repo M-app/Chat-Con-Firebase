@@ -131,11 +131,10 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             }
             @Override
             public void afterTextChanged(final Editable editable) {
-                mSala.setNombre(nombreChat.getText().toString().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_",""));
-                mSala.setNombre(mSala.getNombre().replaceAll("\\s+","_s_"));
+                mSala.setNombre(nombreChat.getText().toString().trim().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_|\\-",""));
                 Toast.makeText(getActivity(),mSala.getNombre(),Toast.LENGTH_LONG).show();
                 if(mSalasExistentes != null){
-                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getNombre());
+                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getNombre() + "-" + mSala.getAdmin());
                     if(salaExiste){
                         nombreChat.setError("Sala ya existe!");
                         btnCrearChat.setEnabled(false);
@@ -182,11 +181,12 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         String email = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_","");
         email = email.replaceAll("\\.","_");
         mSalasRef.child(email).push().setValue(mSala);
+
         // add sala to user object database
         if(mSalasExistentes == null){
             mSalasExistentes = new HashMap<>();
         }
-        mSalasExistentes.put(mSala.getNombre(),false);
+        mSalasExistentes.put(mSala.getNombre() + "-" + mSala.getAdmin(),false);
         Map<String,Object> map = new HashMap<>();
         map.put("salas",mSalasExistentes);
         mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {

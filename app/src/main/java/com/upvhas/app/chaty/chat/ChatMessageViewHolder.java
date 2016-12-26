@@ -13,8 +13,6 @@ import com.upvhas.app.chaty.R;
 
 public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
 
-    private static final String TAG = "ChatMessageViewHolder";
-
     private TextView authorTextview, textMessageTextView;
     private ImageView imageMessageImageView;
 

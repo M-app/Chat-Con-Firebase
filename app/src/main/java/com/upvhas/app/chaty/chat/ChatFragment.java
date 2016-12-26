@@ -1,6 +1,7 @@
 package com.upvhas.app.chaty.chat;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,6 +14,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.upvhas.app.chaty.R;
 
 /**
@@ -22,12 +27,17 @@ public class ChatFragment extends Fragment {
 
     public static final String ANONYMOUS = "anonymous";
 
+    public static final String RC_NOMBRE_CHAT = "NOMBRE_CHAT_REF";
+
     RecyclerView mRecyclerMessages;
     ImageButton mPickImageButton;
     EditText mWriteMessageEditText;
     ImageButton mSendButton;
 
-    private ChatMessageAdapter mAdapter;
+    private String mNombreChat;
+
+    DatabaseReference mCurrentChatReference;
+    FirebaseRecyclerAdapter<Message,ChatMessageViewHolder> mAdapter;
 
     private String mUserName;
 
@@ -38,8 +48,16 @@ public class ChatFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mUserName = ANONYMOUS;
+        mUserName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName().replaceAll("\\s+","");
         View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
+
+        // Init nombre chat
+        Intent chatIntent = getActivity().getIntent();
+        if(chatIntent != null){
+            mNombreChat = chatIntent.getStringExtra(RC_NOMBRE_CHAT);
+        }else {
+            mNombreChat = "anonimo";
+        }
 
         // Initialize views
         mRecyclerMessages = (RecyclerView) rootView.findViewById(R.id.chat_messages_RecyclerView);
@@ -47,22 +65,31 @@ public class ChatFragment extends Fragment {
         mWriteMessageEditText = (EditText) rootView.findViewById(R.id.messageEditText);
         mSendButton = (ImageButton) rootView.findViewById(R.id.sendButton);
 
+        // Init firebase references
+        mCurrentChatReference = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("chats")
+                .child(mNombreChat);
+
         // layout manager recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         mRecyclerMessages.setHasFixedSize(false);
         mRecyclerMessages.setLayoutManager(layoutManager);
 
         // Initialize mAdapter recyclerview
-        mAdapter = new ChatMessageAdapter(getActivity());
+        mAdapter = new FirebaseRecyclerAdapter<Message,ChatMessageViewHolder>(
+                Message.class,
+                R.layout.item_chat,
+                ChatMessageViewHolder.class,
+                mCurrentChatReference) {
+            @Override
+            protected void populateViewHolder(ChatMessageViewHolder viewHolder, Message model, int position) {
+                viewHolder.bind(model);
+            }
+        };
+
         mRecyclerMessages.setAdapter(mAdapter);
 
-        // observer for scroll when some item is inserted
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                mRecyclerMessages.smoothScrollToPosition(mAdapter.getItemCount());
-            }
-        });
 
         // Set Enable sendButton if EditText contains some text
         mWriteMessageEditText.addTextChangedListener(new TextWatcher() {
@@ -85,8 +112,8 @@ public class ChatFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Message message =
-                        new Message(mUserName,mWriteMessageEditText.getText().toString(),null);
-                mAdapter.addMessage(message);
+                        new Message(mUserName,mWriteMessageEditText.getText().toString(),"hola");
+                mCurrentChatReference.push().setValue(message);
                 mWriteMessageEditText.setText("");
             }
         });
