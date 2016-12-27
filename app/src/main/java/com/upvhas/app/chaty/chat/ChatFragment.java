@@ -2,6 +2,7 @@ package com.upvhas.app.chaty.chat;
 
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,10 +16,16 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
+
+import static android.app.Activity.RESULT_OK;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -28,6 +35,7 @@ public class ChatFragment extends Fragment {
     public static final String ANONYMOUS = "anonymous";
 
     public static final String RC_NOMBRE_CHAT = "NOMBRE_CHAT_REF";
+    public static final int RC_PHOTO_PICKER = 222;
 
     RecyclerView mRecyclerMessages;
     ImageButton mPickImageButton;
@@ -38,6 +46,7 @@ public class ChatFragment extends Fragment {
 
     DatabaseReference mCurrentChatReference;
     FirebaseRecyclerAdapter<Message,ChatMessageViewHolder> mAdapter;
+    StorageReference mChatsImagesReference;
 
     private String mUserName;
 
@@ -70,9 +79,11 @@ public class ChatFragment extends Fragment {
                 .getReference()
                 .child("chats")
                 .child(mNombreChat);
+        mChatsImagesReference = FirebaseStorage.getInstance().getReference().child("chat_images");
 
         // layout manager recyclerview
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        layoutManager.setStackFromEnd(true);
         mRecyclerMessages.setHasFixedSize(false);
         mRecyclerMessages.setLayoutManager(layoutManager);
 
@@ -87,6 +98,25 @@ public class ChatFragment extends Fragment {
                 viewHolder.bind(model);
             }
         };
+
+        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                int friendlyMessageCount = mAdapter.getItemCount();
+                int lastVisiblePosition =
+                       layoutManager.findLastCompletelyVisibleItemPosition();
+                // If the recycler view is initially being loaded or the
+                // user is at the bottom of the list, scroll to the bottom
+                // of the list to show the newly added message.
+                if (lastVisiblePosition == -1 ||
+                        (positionStart >= (friendlyMessageCount - 1) &&
+                                lastVisiblePosition == (positionStart - 1))) {
+                    mRecyclerMessages.scrollToPosition(positionStart);
+                }
+            }
+        });
+
 
         mRecyclerMessages.setAdapter(mAdapter);
 
@@ -107,12 +137,23 @@ public class ChatFragment extends Fragment {
             public void afterTextChanged(Editable editable) {}
         });
 
+        // action send image
+        mPickImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/jpeg");
+                intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                startActivityForResult(Intent.createChooser(intent, "Continuar acción utilizando"), RC_PHOTO_PICKER);
+            }
+        });
+
         // action send button
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Message message =
-                        new Message(mUserName,mWriteMessageEditText.getText().toString(),"hola");
+                        new Message(mUserName,mWriteMessageEditText.getText().toString(),null);
                 mCurrentChatReference.push().setValue(message);
                 mWriteMessageEditText.setText("");
             }
@@ -121,4 +162,20 @@ public class ChatFragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK){
+            Uri selectedImageUri = data.getData();
+            StorageReference photoRef
+                    = mChatsImagesReference.child(selectedImageUri.getLastPathSegment());
+            photoRef.putFile(selectedImageUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Message message = new Message(mUserName,null,taskSnapshot.getDownloadUrl().toString());
+                    mCurrentChatReference.push().setValue(message);
+                }
+            });
+        }
+    }
 }

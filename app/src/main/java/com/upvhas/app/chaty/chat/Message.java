@@ -10,6 +10,8 @@ public class Message {
     private String textMessage;
     private String photoUrl;
 
+    public Message(){}
+
     public Message(String autor, String textMessage, String photoUrl) {
         this.autor = autor;
         this.textMessage = textMessage;

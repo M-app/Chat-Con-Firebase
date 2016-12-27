@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.upvhas.app.chaty.R;
 
 /**
@@ -31,9 +32,12 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
             textMessageTextView.setVisibility(View.GONE);
             imageMessageImageView.setVisibility(View.VISIBLE);
             // GLIDE
+            Glide.with(imageMessageImageView.getContext())
+                    .load(message.getPhotoUrl())
+                    .into(imageMessageImageView);
         }else{
-            imageMessageImageView.setVisibility(View.GONE);
             textMessageTextView.setVisibility(View.VISIBLE);
+            imageMessageImageView.setVisibility(View.GONE);
             textMessageTextView.setText(message.getTextMessage());
         }
         authorTextview.setText(message.getAutor());

@@ -89,9 +89,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 if(mUser != null){
                     // user is signed in firebase
                     Intent intent = new Intent(LoginActivity.this,SalasActivity.class);
-                    intent.putExtra("displayName",mUser.getDisplayName());
-                    String photoUrl = mUser.getPhotoUrl().toString();
-                    intent.putExtra("photoUrl",photoUrl);
                     startActivity(intent);
                 }else{
                     // user is signed out

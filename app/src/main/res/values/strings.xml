@@ -6,4 +6,5 @@
 
     <string name="salas_drawer_open">Drawer Open</string>
     <string name="salas_drawer_close">DrawerClose</string>
+    <string name="title_activity_create_chat">Crear Chat</string>
 </resources>

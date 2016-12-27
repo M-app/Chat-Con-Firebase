@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -50,6 +51,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     private Button btnCambiarImagen;
     private Button btnCrearChat;
     private CheckBox checkEsPrivada;
+    private ProgressBar progressBar;
 
     FirebaseStorage mFirebaseStorage;
     StorageReference mChatImagesStorageReference;
@@ -114,6 +116,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         btnCrearChat = (Button) rootView.findViewById(R.id.nuevo_chat_listo_Button);
         btnCrearChat.setOnClickListener(this);
         checkEsPrivada = (CheckBox) rootView.findViewById(R.id.nuevo_chat_check_esPrivada);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.nuevo_chat_progressbar);
 
 
         nombreChat.addTextChangedListener(new TextWatcher() {
@@ -192,9 +195,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                getActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.activity_salas_container,new SalasFragment())
-                        .commit();
+                Intent i = new Intent(getActivity(),SalasActivity.class);
+                startActivity(i);
             }
         });
     }
@@ -234,13 +236,15 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
             btnCrearChat.setEnabled(false);
-            nombreChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
-            String nameImage = "nomri" + fullPhotoUri.getLastPathSegment();
+            String nameImage = nombreChat.getText().toString().trim().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","") +  mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","") + fullPhotoUri.getLastPathSegment().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","");
+            nombreChat.setEnabled(false);
+            progressBar.setVisibility(View.VISIBLE);
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);
             imageRef.putFile(fullPhotoUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    progressBar.setVisibility(View.GONE);
                     Glide.with(getActivity())
                             .load(taskSnapshot.getDownloadUrl())
                             .into(imagenChat);

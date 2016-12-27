@@ -9,7 +9,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -93,14 +92,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
             }
         };
 
-        Intent intent = getIntent();
-        if(intent != null){
-            nameUser.setText(intent.getStringExtra("displayName"));
-            Log.v("PHOTO_URL_GOOGLE",intent.getStringExtra("photoUrl"));
-            Glide.with(SalasActivity.this)
-                    .load(intent.getStringExtra("photoUrl"))
-                    .into(profileImageUser);
-        }
+        setUserData();
 
         // load fragment salas
         if(savedInstanceState == null){
@@ -109,6 +101,13 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                     .commit();
         }
     } // --> end onCreate
+
+    private void setUserData(){
+        nameUser.setText(mFirebaseAuth.getCurrentUser().getDisplayName());
+        Glide.with(SalasActivity.this)
+                .load(mFirebaseAuth.getCurrentUser().getPhotoUrl().toString())
+                .into(profileImageUser);
+    }
 
     @Override
     public void onStart() {
@@ -150,7 +149,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                                 signOut();
                                 return true;
                             case R.id.salas_drawer_action_crearChat:
-                                    showCreateChatFragment();
+                                    startCreateChatActivity();
                                 return true;
                         }
                         String title = menuItem.getTitle().toString();
@@ -161,12 +160,9 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
         );
     }
 
-    private void showCreateChatFragment(){
+    private void startCreateChatActivity(){
         drawerLayout.closeDrawer(GravityCompat.START);
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.activity_salas_container,new CreateChatFragment())
-                .commit();
+        startActivity(new Intent(this,CreateChatActivity.class));
     }
 
     /**
