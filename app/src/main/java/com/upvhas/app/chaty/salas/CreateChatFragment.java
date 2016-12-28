@@ -204,8 +204,9 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     public void selectImage() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, false);
         if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
-            startActivityForResult(intent, REQUEST_IMAGE_GET);
+            startActivityForResult(Intent.createChooser(intent, "Continuar acción utilizando"), REQUEST_IMAGE_GET);
         }
     }
 
@@ -237,7 +238,8 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
             btnCrearChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
-            String nameImage = nombreChat.getText().toString().trim().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","") +  mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","") + fullPhotoUri.getLastPathSegment().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","");
+            String nameImage = nombreChat.getText().toString().trim().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","")
+                    +  mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","");
             nombreChat.setEnabled(false);
             progressBar.setVisibility(View.VISIBLE);
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);

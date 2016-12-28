@@ -6,6 +6,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.upvhas.app.chaty.R;
 
 /**
@@ -17,6 +20,7 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
     private TextView authorTextview, textMessageTextView;
     private ImageView imageMessageImageView;
 
+
     // inflate all views whitin the item_chat
     public ChatMessageViewHolder(View itemView) {
         super(itemView);
@@ -25,22 +29,27 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
         imageMessageImageView = (ImageView) itemView.findViewById(R.id.messageImageView);
     }
 
-    // asigna a cada view lo que tiene que mostrar
-    public void bind(Message message){
-        boolean isPhoto = message.getPhotoUrl() != null;
-        if(isPhoto){
-            textMessageTextView.setVisibility(View.GONE);
-            imageMessageImageView.setVisibility(View.VISIBLE);
-            // GLIDE
-            Glide.with(imageMessageImageView.getContext())
-                    .load(message.getPhotoUrl())
-                    .into(imageMessageImageView);
-        }else{
-            textMessageTextView.setVisibility(View.VISIBLE);
-            imageMessageImageView.setVisibility(View.GONE);
-            textMessageTextView.setText(message.getTextMessage());
-        }
-        authorTextview.setText(message.getAutor());
+    public void setAuthorTextview(String autor) {
+        authorTextview.setText(autor);
     }
 
+    public void setTextMessageTextView(String msg) {
+        if(msg != null){
+            textMessageTextView.setVisibility(View.VISIBLE);
+            imageMessageImageView.setVisibility(View.GONE);
+            textMessageTextView.setText(msg);
+        }
+    }
+
+    public void setImageMessageImageView(String photoUrl) {
+        if(photoUrl != null){
+            textMessageTextView.setVisibility(View.GONE);
+            imageMessageImageView.setVisibility(View.VISIBLE);
+            StorageReference imageRef = FirebaseStorage.getInstance().getReferenceFromUrl(photoUrl);
+            Glide.with(imageMessageImageView.getContext())
+                    .using(new FirebaseImageLoader())
+                    .load(imageRef)
+                    .into(imageMessageImageView);
+        }
+    }
 }

@@ -1,39 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginLeft="@dimen/activity_horizontal_margin"
     android:layout_marginRight="@dimen/activity_horizontal_margin"
-    android:background="#ffffff"
+    android:background="#fff"
+    android:orientation="vertical"
     android:paddingTop="8dp">
 
     <TextView
         android:id="@+id/message_TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         android:fontFamily="sans-serif-black"
         android:textColor="#000"
         android:textStyle="bold"
         android:textSize="32dp" />
 
+    <ImageView
+        android:id="@+id/messageImageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"/>
+
     <TextView
         android:id="@+id/message_author"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/message_TextView"
         android:fontFamily="sans-serif-thin"
         android:layout_marginTop="8dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="#000000" />
 
-    <ImageView
-        android:id="@+id/messageImageView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/message_author"
-        android:adjustViewBounds="true"/>
 
-</RelativeLayout>
+
+</LinearLayout>

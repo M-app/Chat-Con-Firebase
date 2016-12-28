@@ -15,7 +15,7 @@ public class Message {
     public Message(String autor, String textMessage, String photoUrl) {
         this.autor = autor;
         this.textMessage = textMessage;
-        this.photoUrl = photoUrl;
+        this.photoUrl= photoUrl;
     }
 
     public String getAutor() {

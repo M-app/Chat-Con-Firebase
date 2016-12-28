@@ -15,9 +15,11 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -32,8 +34,6 @@ import static android.app.Activity.RESULT_OK;
  */
 public class ChatFragment extends Fragment {
 
-    public static final String ANONYMOUS = "anonymous";
-
     public static final String RC_NOMBRE_CHAT = "NOMBRE_CHAT_REF";
     public static final int RC_PHOTO_PICKER = 222;
 
@@ -45,10 +45,10 @@ public class ChatFragment extends Fragment {
     private String mNombreChat;
 
     DatabaseReference mCurrentChatReference;
-    FirebaseRecyclerAdapter<Message,ChatMessageViewHolder> mAdapter;
     StorageReference mChatsImagesReference;
 
     private String mUserName;
+    private ChatAdapter mRecyclerAdapter;
 
     public ChatFragment() {
 
@@ -87,40 +87,15 @@ public class ChatFragment extends Fragment {
         mRecyclerMessages.setHasFixedSize(false);
         mRecyclerMessages.setLayoutManager(layoutManager);
 
-        // Initialize mAdapter recyclerview
-        mAdapter = new FirebaseRecyclerAdapter<Message,ChatMessageViewHolder>(
-                Message.class,
-                R.layout.item_chat,
-                ChatMessageViewHolder.class,
-                mCurrentChatReference) {
-            @Override
-            protected void populateViewHolder(ChatMessageViewHolder viewHolder, Message model, int position) {
-                viewHolder.bind(model);
-            }
-        };
-
-        mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        // Initialize mRecyclerAdapter recyclerview
+        mRecyclerAdapter = new ChatAdapter(getActivity());
+        mRecyclerMessages.setAdapter(mRecyclerAdapter);
+        mRecyclerAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
-                super.onItemRangeInserted(positionStart, itemCount);
-                int friendlyMessageCount = mAdapter.getItemCount();
-                int lastVisiblePosition =
-                       layoutManager.findLastCompletelyVisibleItemPosition();
-                // If the recycler view is initially being loaded or the
-                // user is at the bottom of the list, scroll to the bottom
-                // of the list to show the newly added message.
-                if (lastVisiblePosition == -1 ||
-                        (positionStart >= (friendlyMessageCount - 1) &&
-                                lastVisiblePosition == (positionStart - 1))) {
-                    mRecyclerMessages.scrollToPosition(positionStart);
-                }
+                mRecyclerMessages.smoothScrollToPosition(mRecyclerAdapter.getItemCount());
             }
         });
-
-
-        mRecyclerMessages.setAdapter(mAdapter);
-
-
         // Set Enable sendButton if EditText contains some text
         mWriteMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -137,12 +112,29 @@ public class ChatFragment extends Fragment {
             public void afterTextChanged(Editable editable) {}
         });
 
+        // fireabase chat listener
+        mCurrentChatReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Message msg = dataSnapshot.getValue(Message.class);
+                mRecyclerAdapter.addMessage(msg);
+            }
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
         // action send image
         mPickImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/jpeg");
+                intent.setType("image/*");
                 intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                 startActivityForResult(Intent.createChooser(intent, "Continuar acción utilizando"), RC_PHOTO_PICKER);
             }
@@ -167,8 +159,8 @@ public class ChatFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK){
             Uri selectedImageUri = data.getData();
-            StorageReference photoRef
-                    = mChatsImagesReference.child(selectedImageUri.getLastPathSegment());
+            final StorageReference photoRef
+                    = mChatsImagesReference.child(mUserName + selectedImageUri.getLastPathSegment());
             photoRef.putFile(selectedImageUri).addOnSuccessListener(getActivity(), new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
