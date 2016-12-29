@@ -74,6 +74,8 @@ public class SalasFragment extends Fragment{
                         String nombreChat = nombre + "-" + admin;
                         Intent chatIntent = new Intent(getActivity(), ChatActivity.class);
                         chatIntent.putExtra(ChatFragment.RC_NOMBRE_CHAT,nombreChat);
+                        chatIntent.putExtra(ChatFragment.RC_CURRET_SALA_KEY,mRecyclerAdapter.getRef(position).getKey());
+                        chatIntent.putExtra(ChatFragment.RC_ADMIN_SALA,admin);
                         startActivity(chatIntent);
                     }
 
