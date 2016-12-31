@@ -1,6 +1,6 @@
 package com.upvhas.app.chaty.entities;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Created by user on 20/12/2016.
@@ -11,12 +11,12 @@ public class User {
     private String email;
     private String nombre;
     private String urlImagenPerfil;
-    private Map<String,Boolean> salas;
+    private List<Sala> salas;
 
     public User() {
     }
 
-    public User(String email,String nombre, String urlImagenPerfil, Map<String, Boolean> salas) {
+    public User(String email, String nombre, String urlImagenPerfil, List<Sala> salas) {
         this.email = email;
         this.nombre = nombre;
         this.urlImagenPerfil = urlImagenPerfil;
@@ -47,11 +47,11 @@ public class User {
         this.urlImagenPerfil = urlImagenPerfil;
     }
 
-    public Map<String, Boolean> getSalas() {
+    public List<Sala> getSalas() {
         return salas;
     }
 
-    public void setSalas(Map<String, Boolean> salas) {
+    public void setSalas(List<Sala> salas) {
         this.salas = salas;
     }
 }

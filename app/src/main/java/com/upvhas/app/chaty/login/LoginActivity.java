@@ -26,10 +26,11 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.upvhas.app.chaty.R;
+import com.upvhas.app.chaty.entities.Sala;
 import com.upvhas.app.chaty.entities.User;
 import com.upvhas.app.chaty.salas.SalasActivity;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
@@ -46,6 +47,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     FirebaseDatabase mFirebaseDatabase;
     DatabaseReference mUsersReference;
+    String mEmailUser;
 
     //Views
     private SignInButton mSignInButton;
@@ -147,11 +149,16 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         }else{
                             // implement login to firebase storage and firebase database for users
                             if(mUser != null){
-                                User user = new User(mUser.getEmail().replace('.','_'),
-                                        mUser.getDisplayName(),
-                                        mUser.getPhotoUrl().toString(),
-                                        new HashMap<String, Boolean>());
-                                mUsersReference.child(user.getEmail()).setValue(user);
+                                mEmailUser = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
+                                mEmailUser = mEmailUser.replaceAll("\\.","_");
+                                if (mUsersReference.child(mEmailUser).child("salas") == null){
+                                    User user = new User(mEmailUser,
+                                            mUser.getDisplayName(),
+                                            mUser.getPhotoUrl().toString(),
+                                            new ArrayList<Sala>());
+                                    mUsersReference.child(user.getEmail()).setValue(user);
+                                }
+
                             }
                         }
                         showProgress(false);

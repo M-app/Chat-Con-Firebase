@@ -16,7 +16,6 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,10 +31,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
 import com.upvhas.app.chaty.entities.Sala;
-import com.upvhas.app.chaty.entities.User;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -63,7 +58,6 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     ValueEventListener mValueEventListener;
 
     private Sala mSala;
-    private HashMap<String,Boolean> mSalasExistentes;
 
     public CreateChatFragment() {
         // Required empty public constructor
@@ -80,21 +74,17 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
         mFirebaseDatabase = FirebaseDatabase.getInstance();
         mSalasRef = mFirebaseDatabase.getReference().child("salas");
         mUser = FirebaseAuth.getInstance().getCurrentUser();
-        mEmail = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_","");
-        mEmail = mEmail.replace('.','_');
+        mEmail = mUser.getEmail().replaceAll("#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
+        mEmail = mEmail.replaceAll("\\.","_");
         mCurrentUserReference = mFirebaseDatabase.getReference()
                 .child("users")
-                .child(mUser.getEmail().replace('.','_'));
+                .child(mUser.getEmail().replaceAll("\\.","_"));
 
         mValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                if(user.getSalas() != null){ // el usuario ya tiene salas
-                    mSalasExistentes = (HashMap<String, Boolean>) user.getSalas();
-                }else{
-                    mSalasExistentes = null;
-                }
+
+
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {}
@@ -102,7 +92,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
 
         // initi sala object
         mSala = new Sala();
-        mSala.setAdmin(mUser.getEmail().replace('.','_'));
+        mSala.setAdmin(mEmail);
 
         // set sala image
         setChatImageFromDensity();
@@ -134,19 +124,9 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             }
             @Override
             public void afterTextChanged(final Editable editable) {
-                mSala.setNombre(nombreChat.getText().toString().trim().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_|\\-",""));
-                Toast.makeText(getActivity(),mSala.getNombre(),Toast.LENGTH_LONG).show();
-                if(mSalasExistentes != null){
-                    boolean salaExiste = mSalasExistentes.containsKey(mSala.getNombre() + "-" + mSala.getAdmin());
-                    if(salaExiste){
-                        nombreChat.setError("Sala ya existe!");
-                        btnCrearChat.setEnabled(false);
-                        btnCambiarImagen.setEnabled(false);
-                    }else{
-                        btnCrearChat.setEnabled(true);
-                    }
-                }
-            } // verificar si el nombre de la sala ya existe para este usuario
+                mSala.setNombre(nombreChat.getText().toString().trim().replaceAll("\\.|\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-",""));
+
+            }
         });
         return rootView;
     }
@@ -154,15 +134,13 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     @Override
     public void onResume() {
         super.onResume();
-        mCurrentUserReference.addValueEventListener(mValueEventListener);
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if(mValueEventListener != null){
-            mCurrentUserReference.removeEventListener(mValueEventListener);
-        }
+
     }
 
     @Override
@@ -179,24 +157,35 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
     }
 
     private void publicarSala(){
-        mSala.setPublica(checkEsPrivada.isSelected());
-        // firebase database new sala
-        String email = mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|_s_","");
-        email = email.replaceAll("\\.","_");
-        mSalasRef.child(email).push().setValue(mSala);
+        boolean salaPrivada = checkEsPrivada.isChecked();
 
-        // add sala to user object database
-        if(mSalasExistentes == null){
-            mSalasExistentes = new HashMap<>();
+        mSala.setPublica(!salaPrivada);
+
+        if(salaPrivada){
+            mCurrentUserReference.child("salas").child(mSala.getAdmin() + "-" + mSala.getNombre())
+                    .setValue(mSala).addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    startActivity(new Intent(getActivity(),SalasActivity.class));
+                }
+            });
+        }else{
+            mCurrentUserReference.child("salas").child(mSala.getAdmin() + "-" + mSala.getNombre())
+                    .setValue(mSala).addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    addRefToSalas();
+                }
+            });
         }
-        mSalasExistentes.put(mSala.getNombre() + "-" + mSala.getAdmin(),false);
-        Map<String,Object> map = new HashMap<>();
-        map.put("salas",mSalasExistentes);
-        mCurrentUserReference.updateChildren(map, new DatabaseReference.CompletionListener() {
+    }
+
+    private void addRefToSalas(){
+        mSalasRef.child(mSala.getAdmin() + "-" + mSala.getNombre())
+                .setValue(mSala).addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
             @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                Intent i = new Intent(getActivity(),SalasActivity.class);
-                startActivity(i);
+            public void onSuccess(Void aVoid) {
+                startActivity(new Intent(getActivity(),SalasActivity.class));
             }
         });
     }
@@ -239,7 +228,7 @@ public class CreateChatFragment extends Fragment implements View.OnClickListener
             btnCrearChat.setEnabled(false);
             Uri fullPhotoUri = data.getData();
             String nameImage = nombreChat.getText().toString().trim().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","")
-                    +  mUser.getEmail().replaceAll("\\#|\\*|\\]|\\[|\\.|\\{|\\}\\\"|_s_|\\s+","");
+                    +  mEmail;
             nombreChat.setEnabled(false);
             progressBar.setVisibility(View.VISIBLE);
             StorageReference imageRef = mChatImagesStorageReference.child(nameImage);

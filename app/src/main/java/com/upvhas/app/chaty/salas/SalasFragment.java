@@ -29,6 +29,7 @@ public class SalasFragment extends Fragment{
     RecyclerView mSalasRecyclerView;
     FirebaseRecyclerAdapter<Sala,SalasViewHolder> mRecyclerAdapter;
     DatabaseReference mSalasReference;
+    DatabaseReference mCurrentUserReference;
     FirebaseUser mUser;
     LinearLayoutManager mLayoutManager;
 
@@ -48,10 +49,12 @@ public class SalasFragment extends Fragment{
 
         // firebase init
         mUser = FirebaseAuth.getInstance().getCurrentUser();
-        mSalasReference= FirebaseDatabase.getInstance().getReference()
-                .child("salas")
-                .child(mUser.getEmail().replace('.','_'));
 
+        mCurrentUserReference = FirebaseDatabase.getInstance().getReference()
+                .child("users")
+                .child(mUser.getEmail().replaceAll("\\.","_"));
+
+        mSalasReference = mCurrentUserReference.child("salas");
 
         mRecyclerAdapter = new FirebaseRecyclerAdapter<Sala, SalasViewHolder>(
                 Sala.class,
@@ -62,7 +65,6 @@ public class SalasFragment extends Fragment{
             protected void populateViewHolder(SalasViewHolder viewHolder, Sala model, int position) {
                 viewHolder.setImagenSala(model.getImageUrl());
                 viewHolder.setNombreSala(model.getNombre());
-                viewHolder.setNuevoMensaje(false);
             }
         };
 
@@ -71,11 +73,9 @@ public class SalasFragment extends Fragment{
                     @Override public void onItemClick(View view, int position) {
                         String nombre = mRecyclerAdapter.getItem(position).getNombre();
                         String admin = mRecyclerAdapter.getItem(position).getAdmin();
-                        String nombreChat = nombre + "-" + admin;
+                        String nombreChat = admin + "-" + nombre;
                         Intent chatIntent = new Intent(getActivity(), ChatActivity.class);
                         chatIntent.putExtra(ChatFragment.RC_NOMBRE_CHAT,nombreChat);
-                        chatIntent.putExtra(ChatFragment.RC_CURRET_SALA_KEY,mRecyclerAdapter.getRef(position).getKey());
-                        chatIntent.putExtra(ChatFragment.RC_ADMIN_SALA,admin);
                         startActivity(chatIntent);
                     }
 

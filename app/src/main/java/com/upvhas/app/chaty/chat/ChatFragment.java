@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,7 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -45,8 +45,6 @@ import static android.app.Activity.RESULT_OK;
 public class ChatFragment extends Fragment {
 
     public static final String RC_NOMBRE_CHAT = "NOMBRE_CHAT_REF";
-    public static final String RC_CURRET_SALA_KEY = "CURRENT_SALA_KEY";
-    public static final String RC_ADMIN_SALA = "CURRENT_SALA_ADMIN";
     public static final int RC_PHOTO_PICKER = 222;
 
     RecyclerView mRecyclerMessages;
@@ -56,8 +54,6 @@ public class ChatFragment extends Fragment {
     Toolbar chatToolbar;
 
     private String mNombreChat;
-
-    private String mCurrentSalaKey;
     DatabaseReference mCurrentChatReference;
     StorageReference mChatsImagesReference;
     FirebaseRecyclerAdapter<Message,ChatMessageViewHolder> mRecyclerAdapter;
@@ -65,7 +61,8 @@ public class ChatFragment extends Fragment {
 
 
     private String mCorreoInvitado;
-    private String mAdminCurrentChat;
+
+    View mRootView;
 
     private String mUserName;
 
@@ -77,7 +74,7 @@ public class ChatFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mUserName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName().replaceAll("\\s+","");
-        View rootView = inflater.inflate(R.layout.fragment_chat, container, false);
+        mRootView = inflater.inflate(R.layout.fragment_chat, container, false);
 
         // Init nombre chat
         Intent chatIntent = getActivity().getIntent();
@@ -85,21 +82,15 @@ public class ChatFragment extends Fragment {
             if(chatIntent.hasExtra(RC_NOMBRE_CHAT)){
                 mNombreChat = chatIntent.getStringExtra(RC_NOMBRE_CHAT);
             }
-            if (chatIntent.hasExtra(RC_CURRET_SALA_KEY)){
-                mCurrentSalaKey = chatIntent.getStringExtra(RC_CURRET_SALA_KEY);
-            }
-            if (chatIntent.hasExtra(RC_ADMIN_SALA)){
-                mAdminCurrentChat = chatIntent.getStringExtra(RC_ADMIN_SALA);
-            }
         }
         // Initialize views
-        mRecyclerMessages = (RecyclerView) rootView.findViewById(R.id.chat_messages_RecyclerView);
-        mPickImageButton = (ImageButton) rootView.findViewById(R.id.photoPickerButton);
-        mWriteMessageEditText = (EditText) rootView.findViewById(R.id.messageEditText);
-        mSendButton = (ImageButton) rootView.findViewById(R.id.sendButton);
-        chatToolbar = (Toolbar) rootView.findViewById(R.id.chat_toolbar);
+        mRecyclerMessages = (RecyclerView) mRootView.findViewById(R.id.chat_messages_RecyclerView);
+        mPickImageButton = (ImageButton) mRootView.findViewById(R.id.photoPickerButton);
+        mWriteMessageEditText = (EditText) mRootView.findViewById(R.id.messageEditText);
+        mSendButton = (ImageButton) mRootView.findViewById(R.id.sendButton);
+        chatToolbar = (Toolbar) mRootView.findViewById(R.id.chat_toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(chatToolbar);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(mNombreChat.substring(0,mNombreChat.indexOf("-")));
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(mNombreChat.substring(mNombreChat.indexOf("-")+1,mNombreChat.length()));
 
         // Init firebase references
         mCurrentChatReference = FirebaseDatabase.getInstance()
@@ -188,7 +179,7 @@ public class ChatFragment extends Fragment {
             }
         });
 
-        return rootView;
+        return mRootView;
     }
 
     @Override
@@ -222,25 +213,30 @@ public class ChatFragment extends Fragment {
                 .setView(dialogView)
                 .setPositiveButton("Agregar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        mCorreoInvitado = correo.getText().toString().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"","");
+                        mCorreoInvitado = correo.getText().toString().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
                         mCorreoInvitado = mCorreoInvitado.replaceAll("\\.","_");
+                        String currentEmail = FirebaseAuth.getInstance().getCurrentUser()
+                                .getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
+                        currentEmail = currentEmail.replaceAll("\\.","_");
                         if (emailExist(mCorreoInvitado)){
-                            FirebaseDatabase.getInstance().getReference().child("salas")
-                                    .child(mAdminCurrentChat)
-                                    .child(mCurrentSalaKey)
+                            FirebaseDatabase.getInstance().getReference().child("users")
+                                    .child(currentEmail)
+                                    .child("salas")
+                                    .child(mNombreChat)
                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(DataSnapshot dataSnapshot) {
                                             Sala sala = dataSnapshot.getValue(Sala.class);
                                             FirebaseDatabase.getInstance().getReference()
-                                                    .child("salas")
+                                                    .child("users")
                                                     .child(mCorreoInvitado)
-                                                    .push()
+                                                    .child("salas")
+                                                    .child(mNombreChat)
                                                     .setValue(sala)
                                                     .addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
                                                 @Override
                                                 public void onSuccess(Void aVoid) {
-
+                                                    Snackbar.make(mRootView,"Usuario invitado Exitosamente",Snackbar.LENGTH_LONG).show();
                                                 }
                                             });
                                         }
@@ -252,7 +248,6 @@ public class ChatFragment extends Fragment {
                         }else {
                             correo.setError("Email aún no existe");
                         }
-                        Toast.makeText(getActivity(),mCorreoInvitado,Toast.LENGTH_LONG).show();
                     }
                 })
                 .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {

@@ -10,30 +10,17 @@
         android:layout_height="56dp"
         android:layout_centerVertical="true" />
 
-    <View
-        android:id="@+id/nuevo_mensaje_view"
-        android:layout_width="5dp"
-        android:background="#fff"
-        android:layout_alignParentRight="true"
-        android:layout_height="5dp"/>
-
     <TextView
         android:id="@+id/name_sala_TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/photo_sala_ImageView"
-        android:layout_alignTop="@id/photo_sala_ImageView"
         android:layout_marginLeft="16dp"
         android:layout_marginBottom="8dp"
+        android:layout_centerVertical="true"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="#000000"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/sala_integrantes"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="integrande 1"
-        android:layout_alignLeft="@id/name_sala_TextView"
-        android:layout_below="@id/name_sala_TextView"/>
+
 </RelativeLayout>
