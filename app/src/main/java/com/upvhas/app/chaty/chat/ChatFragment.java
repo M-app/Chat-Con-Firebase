@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,20 +21,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
-import com.upvhas.app.chaty.entities.Sala;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -55,6 +51,7 @@ public class ChatFragment extends Fragment {
 
     private String mNombreChat;
     DatabaseReference mCurrentChatReference;
+    DatabaseReference mUsersReference;
     StorageReference mChatsImagesReference;
     FirebaseRecyclerAdapter<Message,ChatMessageViewHolder> mRecyclerAdapter;
     LinearLayoutManager mLayoutManager;
@@ -98,6 +95,7 @@ public class ChatFragment extends Fragment {
                 .child("chats")
                 .child(mNombreChat);
         mChatsImagesReference = FirebaseStorage.getInstance().getReference().child("chat_images");
+        mUsersReference = FirebaseDatabase.getInstance().getReference().child("users");
 
         // layout manager recyclerview
         mLayoutManager = new LinearLayoutManager(getActivity());
@@ -218,8 +216,9 @@ public class ChatFragment extends Fragment {
                         String currentEmail = FirebaseAuth.getInstance().getCurrentUser()
                                 .getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
                         currentEmail = currentEmail.replaceAll("\\.","_");
-                        if (emailExist(mCorreoInvitado)){
-                            FirebaseDatabase.getInstance().getReference().child("users")
+                        if (mUsersReference.child(mCorreoInvitado) != null){
+                            Toast.makeText(getActivity(),"existe!",Toast.LENGTH_LONG).show();
+                            /*FirebaseDatabase.getInstance().getReference().child("users")
                                     .child(currentEmail)
                                     .child("salas")
                                     .child(mNombreChat)
@@ -241,10 +240,8 @@ public class ChatFragment extends Fragment {
                                             });
                                         }
                                         @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });
+                                        public void onCancelled(DatabaseError databaseError) {}
+                                    });*/
                         }else {
                             correo.setError("Email aún no existe");
                         }
@@ -258,13 +255,6 @@ public class ChatFragment extends Fragment {
                 }).create();
         dialog.show();
 
-    }
-
-    private boolean emailExist(String email){
-        DatabaseReference emailRef = FirebaseDatabase.getInstance().getReference()
-                .child("users")
-                .child(email);
-        return emailRef != null;
     }
 
     @Override
