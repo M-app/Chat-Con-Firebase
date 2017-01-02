@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,17 +22,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
+import com.upvhas.app.chaty.entities.Sala;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -58,6 +62,8 @@ public class ChatFragment extends Fragment {
 
 
     private String mCorreoInvitado;
+    boolean mExisteInvitado;
+    private String mCurrentEmail;
 
     View mRootView;
 
@@ -213,38 +219,10 @@ public class ChatFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         mCorreoInvitado = correo.getText().toString().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
                         mCorreoInvitado = mCorreoInvitado.replaceAll("\\.","_");
-                        String currentEmail = FirebaseAuth.getInstance().getCurrentUser()
+                        mCurrentEmail = FirebaseAuth.getInstance().getCurrentUser()
                                 .getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
-                        currentEmail = currentEmail.replaceAll("\\.","_");
-                        if (mUsersReference.child(mCorreoInvitado) != null){
-                            Toast.makeText(getActivity(),"existe!",Toast.LENGTH_LONG).show();
-                            /*FirebaseDatabase.getInstance().getReference().child("users")
-                                    .child(currentEmail)
-                                    .child("salas")
-                                    .child(mNombreChat)
-                                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            Sala sala = dataSnapshot.getValue(Sala.class);
-                                            FirebaseDatabase.getInstance().getReference()
-                                                    .child("users")
-                                                    .child(mCorreoInvitado)
-                                                    .child("salas")
-                                                    .child(mNombreChat)
-                                                    .setValue(sala)
-                                                    .addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
-                                                @Override
-                                                public void onSuccess(Void aVoid) {
-                                                    Snackbar.make(mRootView,"Usuario invitado Exitosamente",Snackbar.LENGTH_LONG).show();
-                                                }
-                                            });
-                                        }
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {}
-                                    });*/
-                        }else {
-                            correo.setError("Email aún no existe");
-                        }
+                        mCurrentEmail = mCurrentEmail.replaceAll("\\.","_");
+                        inviteToEmail(mCorreoInvitado);
                     }
                 })
                 .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
@@ -254,7 +232,48 @@ public class ChatFragment extends Fragment {
                     }
                 }).create();
         dialog.show();
+    }
 
+    private void inviteToEmail(final String email){
+        FirebaseDatabase
+                .getInstance()
+                .getReference()
+                .child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.hasChild(email)){
+                    FirebaseDatabase.getInstance().getReference().child("users")
+                            .child(mCurrentEmail)
+                            .child("salas")
+                            .child(mNombreChat)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    Sala sala = dataSnapshot.getValue(Sala.class);
+                                    FirebaseDatabase.getInstance().getReference()
+                                            .child("users")
+                                            .child(mCorreoInvitado)
+                                            .child("salas")
+                                            .child(mNombreChat)
+                                            .setValue(sala)
+                                            .addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void aVoid) {
+                                                    Snackbar.make(mRootView,"Usuario invitado Exitosamente",Snackbar.LENGTH_LONG).show();
+                                                }
+                                            });
+                                }
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {}
+                            });
+                }else{
+                    Snackbar.make(mRootView,"Email no existe",Snackbar.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
     }
 
     @Override
