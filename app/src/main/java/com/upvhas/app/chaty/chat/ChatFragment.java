@@ -36,6 +36,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
 import com.upvhas.app.chaty.entities.Sala;
+import com.upvhas.app.chaty.salas.SalasActivity;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -62,7 +63,6 @@ public class ChatFragment extends Fragment {
 
 
     private String mCorreoInvitado;
-    boolean mExisteInvitado;
     private String mCurrentEmail;
 
     View mRootView;
@@ -78,6 +78,10 @@ public class ChatFragment extends Fragment {
                              Bundle savedInstanceState) {
         mUserName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName().replaceAll("\\s+","");
         mRootView = inflater.inflate(R.layout.fragment_chat, container, false);
+
+        mCurrentEmail = FirebaseAuth.getInstance().getCurrentUser()
+                .getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
+        mCurrentEmail = mCurrentEmail.replaceAll("\\.","_");
 
         // Init nombre chat
         Intent chatIntent = getActivity().getIntent();
@@ -204,8 +208,24 @@ public class ChatFragment extends Fragment {
             case R.id.chat_action_invite:
                 showInviteToChatDialog();
                 return true;
+            case R.id.chat_action_delete:
+                deleteChat();
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void deleteChat(){
+        mUsersReference.child(mCurrentEmail)
+                .child("salas")
+                .child(mNombreChat)
+                .removeValue()
+                .addOnSuccessListener(getActivity(), new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        startActivity(new Intent(getActivity(), SalasActivity.class));
+                    }
+                });
     }
 
     private void showInviteToChatDialog(){
@@ -219,9 +239,6 @@ public class ChatFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         mCorreoInvitado = correo.getText().toString().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
                         mCorreoInvitado = mCorreoInvitado.replaceAll("\\.","_");
-                        mCurrentEmail = FirebaseAuth.getInstance().getCurrentUser()
-                                .getEmail().replaceAll("\\#|\\*|\\]|\\[|\\|\\{|\\}\\\"|\\-","");
-                        mCurrentEmail = mCurrentEmail.replaceAll("\\.","_");
                         inviteToEmail(mCorreoInvitado);
                     }
                 })

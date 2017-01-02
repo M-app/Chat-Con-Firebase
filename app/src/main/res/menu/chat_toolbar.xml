@@ -2,7 +2,10 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <item android:title="Eliminar Chat"
+        android:id="@+id/chat_action_delete"
+        app:showAsAction="never" />
     <item android:title="Invitar a este chat"
         android:id="@+id/chat_action_invite"
-        android:showAsAction="never" />
+        app:showAsAction="never" />
 </menu>
