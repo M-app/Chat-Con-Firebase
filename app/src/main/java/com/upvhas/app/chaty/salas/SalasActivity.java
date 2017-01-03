@@ -1,6 +1,7 @@
 package com.upvhas.app.chaty.salas;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -12,9 +13,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.Auth;
@@ -23,11 +24,22 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.upvhas.app.chaty.R;
 import com.upvhas.app.chaty.login.LoginActivity;
 
 public class SalasActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
+
+    private static final int RC_CHANGE_PROFILE_PHOTO = 111;
 
     private DrawerLayout drawerLayout;
     private NavigationView salasNavigationView;
@@ -36,7 +48,9 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
     // Views
         // Header navigation drawer
     private TextView nameUser;
+    private TextView userName;
     private ImageView profileImageUser;
+    private ImageButton changeProfilePhotoButton;
 
     // Google api client for sign out
     GoogleApiClient mGoogleApiClient;
@@ -44,6 +58,9 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
     // Firebase Instances
     FirebaseAuth mFirebaseAuth;
     FirebaseAuth.AuthStateListener mStateListener;
+    DatabaseReference mCurrentUserReference;
+
+    private String mEmailUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +68,7 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
         setContentView(R.layout.activity_salas);
 
         setToolbar();
+
 
         // Initialize views
         drawerLayout = (DrawerLayout) findViewById(R.id.salas_drawer_layout);
@@ -60,10 +78,11 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
         if(salasNavigationView != null){
             View navView = salasNavigationView.getHeaderView(0);
             nameUser = (TextView) navView.findViewById(R.id.salas_drawer_name_TextView);
+            userName = (TextView) navView.findViewById(R.id.salas_drawer_username_TextView);
             profileImageUser = (ImageView) navView.findViewById(R.id.salas_drawer_profile_photo);
+            changeProfilePhotoButton = (ImageButton) navView.findViewById(R.id.salas_drawer_change_profilePhoto_ImageButton);
             setupDrawerContent(salasNavigationView);
         }
-
 
 
         // Gooogle Sign In Requisito for signOut()
@@ -79,6 +98,9 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
 
         // Firebase Initialize
         mFirebaseAuth = FirebaseAuth.getInstance();
+        mEmailUser = mFirebaseAuth.getCurrentUser().getEmail().replaceAll("\\#|\\*|\\]|\\[|\\{|\\}\\\"|\\s+","");
+        mEmailUser = mEmailUser.replaceAll("\\.","_");
+        mCurrentUserReference = FirebaseDatabase.getInstance().getReference().child("users").child(mEmailUser);
 
         // Initialize AuthStateListener
         mStateListener = new FirebaseAuth.AuthStateListener() {
@@ -100,15 +122,58 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                     .add(R.id.activity_salas_container,new SalasFragment())
                     .commit();
         }
+
+        changeProfilePhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                selectImage();
+            }
+        });
     } // --> end onCreate
+
+    public void selectImage() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, false);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(Intent.createChooser(intent, "Continuar acción utilizando"), RC_CHANGE_PROFILE_PHOTO);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_CHANGE_PROFILE_PHOTO){
+            if(resultCode == RESULT_OK){
+                Uri fullPhotoUri = data.getData();
+                String nameImage = mEmailUser + "-" + "profile";
+                StorageReference imageRef = FirebaseStorage.getInstance()
+                        .getReference().child("profile_images").child(nameImage);
+                imageRef.putFile(fullPhotoUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        mCurrentUserReference.child("urlImagenPerfil").setValue(taskSnapshot.getDownloadUrl().toString());
+                    }
+                });
+            }
+        }
+    }
 
     private void setUserData(){
         nameUser.setText(mFirebaseAuth.getCurrentUser().getDisplayName());
-        Glide.with(SalasActivity.this)
-                .load(mFirebaseAuth.getCurrentUser().getPhotoUrl().toString())
-                .into(profileImageUser);
+        userName.setText(mFirebaseAuth.getCurrentUser().getEmail());
+        mCurrentUserReference.child("urlImagenPerfil")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Glide.with(SalasActivity.this)
+                                .load(dataSnapshot.getValue(String.class))
+                                .into(profileImageUser);
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
     }
-
     @Override
     public void onStart() {
         super.onStart();
@@ -151,13 +216,19 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                             case R.id.salas_drawer_action_crearChat:
                                     startCreateChatActivity();
                                 return true;
+                            case R.id.salas_drawer_action_unirseChat:
+                                startPublicSalasActivity();
+                                return true;
                         }
-                        String title = menuItem.getTitle().toString();
-                        Toast.makeText(SalasActivity.this,title,Toast.LENGTH_LONG).show();
                         return true;
                     }
                 }
         );
+    }
+
+    private void startPublicSalasActivity(){
+        drawerLayout.closeDrawer(GravityCompat.START);
+        startActivity(new Intent(this,SalasPublicasActivity.class));
     }
 
     private void startCreateChatActivity(){

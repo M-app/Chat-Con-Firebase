@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="72dp">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:orientation="vertical">
+
 
     <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/photo_sala_ImageView"
+        android:id="@+id/item_salas_publicas_imagen"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_centerVertical="true" />
+        android:layout_centerVertical="true"/>
 
     <TextView
-        android:id="@+id/name_sala_TextView"
+        android:id="@+id/item_salas_publicas_nombreSala"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/photo_sala_ImageView"
-        android:layout_toEndOf="@id/photo_sala_ImageView"
+        android:layout_toRightOf="@id/item_salas_publicas_imagen"
+        android:layout_toEndOf="@id/item_salas_publicas_imagen"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginBottom="8dp"
@@ -24,5 +25,6 @@
         android:textColor="#000000"
         android:textStyle="bold" />
 
-
 </RelativeLayout>
+
+
