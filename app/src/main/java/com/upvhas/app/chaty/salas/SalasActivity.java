@@ -152,7 +152,13 @@ public class SalasActivity extends AppCompatActivity implements GoogleApiClient.
                 imageRef.putFile(fullPhotoUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        mCurrentUserReference.child("urlImagenPerfil").setValue(taskSnapshot.getDownloadUrl().toString());
+                        mCurrentUserReference.child("urlImagenPerfil").setValue(taskSnapshot.getDownloadUrl().toString())
+                                .addOnSuccessListener(SalasActivity.this, new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        setUserData();
+                                    }
+                                });
                     }
                 });
             }

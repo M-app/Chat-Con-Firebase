@@ -9,41 +9,51 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop" />
 
-    <TextView
-        android:id="@+id/salas_drawer_name_TextView"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="40dp"
-        android:layout_marginLeft="16dp"
-        android:textColor="#000"
-        android:textSize="32dp"
-        android:textStyle="bold" />
+        android:background="#80000000"
+        android:layout_alignParentBottom="true">
 
-    <TextView
-        android:id="@+id/salas_drawer_username_TextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
-        android:fontFamily="sans-serif-light"
-        android:textColor="#000" />
+        <TextView
+            android:id="@+id/salas_drawer_name_TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Programa 2"
+            android:layout_marginTop="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="68dp"
+            android:alpha="1"
+            android:layout_marginBottom="8dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#fff"
+            android:textStyle="bold" />
 
-    <ImageButton
-        android:id="@+id/salas_drawer_change_profilePhoto_ImageButton"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:src="@mipmap/ic_perm_media_white_36dp"/>
+        <TextView
+            android:id="@+id/salas_drawer_username_TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginRight="68dp"
+            android:alpha="1"
+            android:layout_below="@id/salas_drawer_name_TextView"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="xlopez3000@gmail.com"
+            android:textColor="#fff" />
 
+        <ImageButton
+            android:id="@+id/salas_drawer_change_profilePhoto_ImageButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
+            android:alpha="1"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/ic_insert_photo_white_36dp" />
+
+    </RelativeLayout>
 </RelativeLayout>
